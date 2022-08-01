@@ -31,16 +31,18 @@ class App {
     this.#createScene()
     this.#createCamera()
     this.#createRenderer()
-    this.#createBox()
-    this.#createShadedBox()
+    // this.#createBox()
+    // this.#createShadedBox()
     this.#createLight()
     this.#createClock()
     this.#addListeners()
     this.#createControls()
-    this.#createDebugPanel()
+    // this.#createDebugPanel()
     this.#createLoaders()
 
-    await this.#loadModel()
+    // await this.#loadModel()
+
+    this.#loadVoronoiData();
 
     this.renderer.setAnimationLoop(() => {
       this.#update()
@@ -58,11 +60,11 @@ class App {
   #update() {
     const elapsed = this.clock.getElapsedTime()
 
-    this.box.rotation.y = elapsed
-    this.box.rotation.z = elapsed*0.6
+    // this.box.rotation.y = elapsed
+    // this.box.rotation.z = elapsed * 0.6
 
-    this.shadedBox.rotation.y = elapsed
-    this.shadedBox.rotation.z = elapsed*0.6
+    // this.shadedBox.rotation.y = elapsed
+    // this.shadedBox.rotation.z = elapsed * 0.6
   }
 
   #render() {
