@@ -10,7 +10,7 @@ import {
   PointLight,
   Color,
   Clock,
-  LoadingManager
+  Vector3
 } from 'three'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
@@ -262,6 +262,43 @@ class App {
     this.camera.aspect = this.container.clientWidth / this.container.clientHeight
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight)
+  }
+
+  async #loadVoronoiData() {
+    // return
+    const response = await fetch('random_points_p.gnu')
+    const dataPoints = await response.text()
+    const points = this.#parsePoints(dataPoints);
+    const verticesResponse = await fetch('random_points_v.gnu')
+    const vertices = await verticesResponse.text();
+    const lines = this.#parseVertices(vertices)
+    console.log('lines: ', lines);
+  }
+
+  #parsePoints(rawPoints) {
+    const lines = rawPoints.split('\n')
+    const points = lines.map(this.#lineToPoints)
+    return points
+
+
+  }
+
+  #parseVertices(vertices) {
+    const facesRaw = vertices.split('\n\n')
+    const lines = facesRaw.map(face => {
+      const pointsString = face.split('\n').filter(x => x != '')
+      const points = pointsString.map(this.#lineToPoints)
+      return points
+    })
+    return lines
+  }
+
+  #lineToPoints(line) {
+    const strings = line.split(' ')
+    const numbers = strings.map(x => +x)
+    numbers.shift();
+    return numbers
+
   }
 }
 
