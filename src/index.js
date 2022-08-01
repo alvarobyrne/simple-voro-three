@@ -10,6 +10,9 @@ import {
   PointLight,
   Color,
   Clock,
+  LoadingManager,
+  SphereBufferGeometry,
+  MeshBasicMaterial,
   Vector3
 } from 'three'
 
@@ -269,6 +272,7 @@ class App {
     const response = await fetch('random_points_p.gnu')
     const dataPoints = await response.text()
     const points = this.#parsePoints(dataPoints);
+    this.#drawPoints(points)
     const verticesResponse = await fetch('random_points_v.gnu')
     const vertices = await verticesResponse.text();
     const lines = this.#parseVertices(vertices)
@@ -298,6 +302,18 @@ class App {
     const numbers = strings.map(x => +x)
     numbers.shift();
     return numbers
+
+  }
+
+  #drawPoints(points) {
+    console.log('points: ', points);
+    points.forEach(element => {
+      const g = new SphereBufferGeometry(0.1)
+      const m = new MeshBasicMaterial();
+      const s = (new Mesh(g, m));
+      s.position.set(...element)
+      this.scene.add(s);
+    });
 
   }
 }
