@@ -34,7 +34,7 @@ class App {
     this.#createScene()
     this.#createCamera()
     this.#createRenderer()
-    // this.#createBox()
+    this.#createBox()
     // this.#createShadedBox()
     this.#createLight()
     this.#createClock()
@@ -109,19 +109,19 @@ class App {
   #createBox() {
     const geometry = new BoxGeometry(1, 1, 1, 1, 1, 1)
 
-    const material = new MeshStandardMaterial({
-      color: 0xffffff,
-      metalness: 0.7,
-      roughness: 0.35
+    const material = new MeshBasicMaterial({
+      color: 0xff0000,
+      wireframe: true,
     })
 
     this.box = new Mesh(geometry, material)
 
-    this.box.scale.x = 4
-    this.box.scale.y = 4
-    this.box.scale.z = 4
+    const scale = 2;
+    this.box.scale.x = scale;
+    this.box.scale.y = scale;
+    this.box.scale.z = scale;
 
-    this.box.position.x = -5
+    // this.box.position.x = -5
 
     this.scene.add(this.box)
   }
