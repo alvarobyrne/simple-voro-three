@@ -13,7 +13,10 @@ import {
   LoadingManager,
   SphereBufferGeometry,
   MeshBasicMaterial,
-  Vector3
+  Vector3,
+  LineBasicMaterial,
+  BufferGeometry,
+  Line
 } from 'three'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
@@ -81,6 +84,7 @@ class App {
   #createCamera() {
     this.camera = new PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 100)
     this.camera.position.set(-4, 4, 10)
+    this.camera.position.multiplyScalar(.4)
   }
 
   #createRenderer() {
@@ -276,7 +280,8 @@ class App {
     const verticesResponse = await fetch('random_points_v.gnu')
     const vertices = await verticesResponse.text();
     const lines = this.#parseVertices(vertices).filter(x => x.length > 0)
-    console.log('lines: ', lines);
+    this.#drawLines(lines);
+
   }
 
   #parsePoints(rawPoints) {
@@ -308,7 +313,6 @@ class App {
   }
 
   #drawPoints(points) {
-    console.log('points: ', points);
     points.forEach(element => {
       const g = new SphereBufferGeometry(0.1)
       const m = new MeshBasicMaterial();
@@ -317,6 +321,16 @@ class App {
       this.scene.add(s);
     });
 
+  }
+
+  #drawLines(lines) {
+    const m = new LineBasicMaterial({ color: 'lightblue' })
+    const vectors = lines.map(line => line.map(x => new Vector3(...x)))
+    vectors.forEach(v => {
+      const g = new BufferGeometry().setFromPoints(v);
+      const line = new Line(g, m);
+      this.scene.add(line);
+    })
   }
 }
 
