@@ -281,7 +281,8 @@ class App {
 
   #parsePoints(rawPoints) {
     const lines = rawPoints.split('\n')
-    const points = lines.map(this.#stringLineToPoints)
+    const IS_SHIFTNG = true;
+    const points = lines.map(x => this.#stringLineToPoints(x, IS_SHIFTNG))
     return points
 
 
@@ -291,16 +292,17 @@ class App {
     const facesRaw = vertices.split('\n\n')
     const lines = facesRaw.map(face => {
       const pointsString = face.split('\n').filter(x => x != '')
-      const points = pointsString.map(this.#stringLineToPoints)
+      const IS_SHIFTNG = false;
+      const points = pointsString.map(x => this.#stringLineToPoints(x, IS_SHIFTNG))
       return points
     })
     return lines
   }
 
-  #stringLineToPoints(stringLine) {
+  #stringLineToPoints(stringLine, isShifting = false) {
     const strings = stringLine.split(' ')
     const numbers = strings.map(x => +x)
-    numbers.shift();
+    if (isShifting) numbers.shift();
     return numbers
 
   }
