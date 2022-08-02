@@ -281,7 +281,7 @@ class App {
 
   #parsePoints(rawPoints) {
     const lines = rawPoints.split('\n')
-    const points = lines.map(this.#lineToPoints)
+    const points = lines.map(this.#stringLineToPoints)
     return points
 
 
@@ -291,14 +291,14 @@ class App {
     const facesRaw = vertices.split('\n\n')
     const lines = facesRaw.map(face => {
       const pointsString = face.split('\n').filter(x => x != '')
-      const points = pointsString.map(this.#lineToPoints)
+      const points = pointsString.map(this.#stringLineToPoints)
       return points
     })
     return lines
   }
 
-  #lineToPoints(line) {
-    const strings = line.split(' ')
+  #stringLineToPoints(stringLine) {
+    const strings = stringLine.split(' ')
     const numbers = strings.map(x => +x)
     numbers.shift();
     return numbers
