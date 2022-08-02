@@ -71,6 +71,8 @@ class App {
 
     // this.shadedBox.rotation.y = elapsed
     // this.shadedBox.rotation.z = elapsed * 0.6
+
+    this.controls.update()
   }
 
   #render() {
@@ -201,6 +203,7 @@ class App {
 
   #createControls() {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+    this.controls.enableDamping = true;
   }
 
   #createDebugPanel() {
