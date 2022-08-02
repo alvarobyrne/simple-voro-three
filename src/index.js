@@ -271,11 +271,11 @@ class App {
     // return
     const response = await fetch('random_points_p.gnu')
     const dataPoints = await response.text()
-    const points = this.#parsePoints(dataPoints);
+    const points = this.#parsePoints(dataPoints).filter(x => x.length > 0);
     this.#drawPoints(points)
     const verticesResponse = await fetch('random_points_v.gnu')
     const vertices = await verticesResponse.text();
-    const lines = this.#parseVertices(vertices)
+    const lines = this.#parseVertices(vertices).filter(x => x.length > 0)
     console.log('lines: ', lines);
   }
 
