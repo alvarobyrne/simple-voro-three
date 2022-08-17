@@ -297,6 +297,22 @@ class App {
     const indicesCellsRaw = await responseIndicesCells.text()
     const indicesCells = this.#numberParser(indicesCellsRaw, 'parseInt')
     console.log('indicesCells: ', indicesCells);
+
+    const trianglesIndicesFromPolygonsIndices = (poyhedronFaces) => {
+      const triangles = [];
+      for (let i = 0; i < poyhedronFaces.length; i++) {
+        const face = poyhedronFaces[i];
+        const faceLength = face.length;
+        for (let j = 0; j < faceLength - 2; j++) {
+          const triangle = [face[0], face[j + 1], face[j + 2]];
+          triangles.push(triangle);
+        }
+      }
+      return triangles;
+    };
+    const trianglesIndices = indicesCells.map(trianglesIndicesFromPolygonsIndices)
+    console.log('trianglesIndices: ', trianglesIndices);
+
   }
 
   #numberParser(rawData, parser = 'parseFloat') {
