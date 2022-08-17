@@ -280,11 +280,32 @@ class App {
     const dataPoints = await response.text()
     const points = this.#parsePoints(dataPoints).filter(x => x.length > 0);
     this.#drawPoints(points)
-    const verticesResponse = await fetch('random_points_v.gnu')
-    const vertices = await verticesResponse.text();
-    const lines = this.#parseEdgesVertices(vertices).filter(x => x.length > 0)
+    const edgesVerticesResponse = await fetch('random_points_v.gnu')
+    const edgesVertices = await edgesVerticesResponse.text();
+    const lines = this.#parseEdgesVertices(edgesVertices).filter(x => x.length > 0)
     this.#drawLines(lines);
 
+    const responseVerticesCells = await fetch('vertices.txt')
+    const verticesCellsRaw = await responseVerticesCells.text();
+
+
+    const verticesCells = this.#parseVerticesCells(verticesCellsRaw);
+    const flattened = verticesCells.flat(1)
+    this.#drawPoints(flattened, 0.05, 'red')
+  }
+
+  #parseVerticesCells(rawData) {
+
+    const perLine = rawData.split('\n')
+
+    return perLine.map(x => {
+
+      const y = x.split(' ')
+        .map(stringPoint => stringPoint.slice(1, -1)
+          .split(',')
+          .map(stringNumber => parseFloat(stringNumber)))
+      return y
+    }).filter(list => list.length > 3)
   }
 
   #parsePoints(rawPoints) {
@@ -315,10 +336,10 @@ class App {
 
   }
 
-  #drawPoints(points) {
+  #drawPoints(points, size = 0.1, color = 'white') {
     points.forEach(element => {
-      const g = new SphereBufferGeometry(0.01)
-      const m = new MeshBasicMaterial();
+      const g = new SphereBufferGeometry(size)
+      const m = new MeshBasicMaterial({ color });
       const s = (new Mesh(g, m));
       s.position.set(...element)
       this.scene.add(s);
