@@ -282,7 +282,7 @@ class App {
     this.#drawPoints(points)
     const verticesResponse = await fetch('random_points_v.gnu')
     const vertices = await verticesResponse.text();
-    const lines = this.#parseVertices(vertices).filter(x => x.length > 0)
+    const lines = this.#parseEdgesVertices(vertices).filter(x => x.length > 0)
     this.#drawLines(lines);
 
   }
@@ -296,7 +296,7 @@ class App {
 
   }
 
-  #parseVertices(vertices) {
+  #parseEdgesVertices(vertices) {
     const facesRaw = vertices.split('\n\n')
     const lines = facesRaw.map(face => {
       const pointsString = face.split('\n').filter(x => x != '')
@@ -317,7 +317,7 @@ class App {
 
   #drawPoints(points) {
     points.forEach(element => {
-      const g = new SphereBufferGeometry(0.1)
+      const g = new SphereBufferGeometry(0.01)
       const m = new MeshBasicMaterial();
       const s = (new Mesh(g, m));
       s.position.set(...element)
