@@ -289,21 +289,23 @@ class App {
     const verticesCellsRaw = await responseVerticesCells.text();
 
 
-    const verticesCells = this.#parseVerticesCells(verticesCellsRaw);
+    const verticesCells = this.#numberParser(verticesCellsRaw);
     const flattened = verticesCells.flat(1)
     this.#drawPoints(flattened, 0.05, 'red')
+
+    const responseIndicesCells = await fetch('indices.txt');
+    const indicesCellsRaw = await responseIndicesCells.text()
+    const indicesCells = this.#numberParser(indicesCellsRaw, 'parseInt')
+    console.log('indicesCells: ', indicesCells);
   }
 
-  #parseVerticesCells(rawData) {
-
+  #numberParser(rawData, parser = 'parseFloat') {
     const perLine = rawData.split('\n')
-
     return perLine.map(x => {
-
       const y = x.split(' ')
         .map(stringPoint => stringPoint.slice(1, -1)
           .split(',')
-          .map(stringNumber => parseFloat(stringNumber)))
+          .map(stringNumber => window[parser](stringNumber)))
       return y
     }).filter(list => list.length > 3)
   }
