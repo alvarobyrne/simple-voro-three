@@ -309,7 +309,11 @@ class App {
     };
     const trianglesIndices = indicesCells.map(trianglesIndicesFromPolygonsIndices)
     const cells3d = this.#drawCellPolyhedra(verticesCells, trianglesIndices)
-    console.log('cells3d: ', cells3d);
+
+    const responseCentroids = await fetch('centroids.txt');
+    const centroidsRaw = await responseCentroids.text();
+    const centroids = this.#numberParserColumn(centroidsRaw);
+    this.#drawPoints(centroids, 0.03, 'red');
   }
 
   #drawCellPolyhedra(vertices, indices) {
@@ -323,7 +327,6 @@ class App {
 
     })
     return meshes
-
   }
 
   #drawCellPolyhedron(vertices, indices, color) {
@@ -352,6 +355,16 @@ class App {
           .map(stringNumber => window[parser](stringNumber)))
       return y
     }).filter(list => list.length > 3)
+  }
+
+  #numberParserColumn(rawData, parser = 'parseFloat') {
+    const perLine = rawData.split('\n').filter(list => list.length > 3)
+    return perLine.map(x => {
+      const y = x.split(' ')
+        .map(stringNumber => window[parser](stringNumber))
+      return y
+    })
+
   }
 
   #parsePoints(rawPoints) {
