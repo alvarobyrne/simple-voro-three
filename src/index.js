@@ -279,7 +279,7 @@ class App {
     const response = await fetch('random_points_p.gnu')
     const dataPoints = await response.text()
     const points = this.#parsePoints(dataPoints).filter(x => x.length > 0);
-    this.#drawPoints(points)
+    this.#drawPoints(points, 0.05)
     const edgesVerticesResponse = await fetch('random_points_v.gnu')
     const edgesVertices = await edgesVerticesResponse.text();
     const lines = this.#parseEdgesVertices(edgesVertices).filter(x => x.length > 0)
@@ -290,13 +290,10 @@ class App {
 
 
     const verticesCells = this.#numberParser(verticesCellsRaw);
-    const flattened = verticesCells.flat(1)
-    this.#drawPoints(flattened, 0.05, 'red')
 
     const responseIndicesCells = await fetch('indices.txt');
     const indicesCellsRaw = await responseIndicesCells.text()
     const indicesCells = this.#numberParser(indicesCellsRaw, 'parseInt')
-    console.log('indicesCells: ', indicesCells);
 
     const trianglesIndicesFromPolygonsIndices = (poyhedronFaces) => {
       const triangles = [];
@@ -311,7 +308,38 @@ class App {
       return triangles;
     };
     const trianglesIndices = indicesCells.map(trianglesIndicesFromPolygonsIndices)
-    console.log('trianglesIndices: ', trianglesIndices);
+    const cells3d = this.#drawCellPolyhedra(verticesCells, trianglesIndices)
+    console.log('cells3d: ', cells3d);
+  }
+
+  #drawCellPolyhedra(vertices, indices) {
+    const colors = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'gray', 'white']
+    if (indices.length !== vertices.length) {
+      throw 'Arrays must be of same length'
+    }
+    const meshes = vertices.map((polyhedronVertices, i) => {
+      const polyhedronIndices = indices[i];
+      return this.#drawCellPolyhedron(polyhedronVertices, polyhedronIndices, colors[i % colors.length])
+
+    })
+    return meshes
+
+  }
+
+  #drawCellPolyhedron(vertices, indices, color) {
+    const index = indices.flat();
+    const maxIndex = Math.max(...index)
+    if (vertices.length - 1 !== maxIndex) {
+      throw new Error('maxIndex should be equal to vertices length')
+    }
+    const points = vertices.map(vectorAsArray => new Vector3(...vectorAsArray))
+    const g = new BufferGeometry().setFromPoints(points);
+    g.setIndex(index)
+    const m = new MeshBasicMaterial({ color, transparent: true, opacity: 0.3 })
+    const mesh = new Mesh(g, m)
+    this.scene.add(mesh)
+    return mesh
+
 
   }
 
