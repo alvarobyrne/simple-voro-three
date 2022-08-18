@@ -43,7 +43,7 @@ class App {
     this.#createClock()
     this.#addListeners()
     this.#createControls()
-    // this.#createDebugPanel()
+    this.#createDebugPanel()
     this.#createLoaders()
 
     // await this.#loadModel()
@@ -205,12 +205,23 @@ class App {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.enableDamping = true;
   }
-
+  #getOnClick(href) {
+    return () => {
+      const clicker = document.createElement('a')
+      clicker.href = href
+      clicker.target = '_blank'
+      clicker.click()
+    }
+  }
   #createDebugPanel() {
     this.pane = new Pane({
       container: document.querySelector('#debug')
     })
-
+    this.pane.addButton({ title: 'voro++' }).on('click', this.#getOnClick('https://math.lbl.gov/voro++'))
+    this.pane.addButton({ title: 'voro++: examples' }).on('click', this.#getOnClick('https://math.lbl.gov/voro++/examples'))
+    this.pane.addButton({ title: 'voro++: custom output' }).on('click', this.#getOnClick('https://math.lbl.gov/voro++/doc/custom.html'))
+    //
+    return
     /**
      * Scene configuration
      */
