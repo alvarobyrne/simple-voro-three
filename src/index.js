@@ -16,7 +16,9 @@ import {
   Vector3,
   LineBasicMaterial,
   BufferGeometry,
-  Line
+  Line,
+  Group,
+  DoubleSide
 } from 'three'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
@@ -27,6 +29,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { Pane } from 'tweakpane'
 
 class App {
+  #voronoiModel = [];
   #resizeCallback = () => this.#onResize()
 
   constructor(container) {
@@ -294,7 +297,7 @@ class App {
     const edgesVerticesResponse = await fetch('random_points_v.gnu')
     const edgesVertices = await edgesVerticesResponse.text();
     const lines = this.#parseEdgesVertices(edgesVertices).filter(x => x.length > 0)
-    this.#drawLines(lines);
+    this.#drawLines(lines, 'red');
 
     const responseVerticesCells = await fetch('vertices.txt')
     const verticesCellsRaw = await responseVerticesCells.text();
@@ -319,12 +322,96 @@ class App {
       return triangles;
     };
     const trianglesIndices = indicesCells.map(trianglesIndicesFromPolygonsIndices)
-    const cells3d = this.#drawCellPolyhedra(verticesCells, trianglesIndices)
+    // const cells3d = this.#drawCellPolyhedra(verticesCells, trianglesIndices)
 
     const responseCentroids = await fetch('centroids.txt');
     const centroidsRaw = await responseCentroids.text();
     const centroids = this.#numberParserColumn(centroidsRaw);
     this.#drawPoints(centroids, 0.03, 'red');
+
+    this.#voronoiModel = this.#makePolyhedronModel({
+      indices: trianglesIndices,
+      vertices: verticesCells,
+      centroids
+    })
+
+    this.#scaleAroundCentroid(this.#voronoiModel);
+    const verticesCellsScaled = this.#scaleAroundCentroids(verticesCells, centroids, 0.1)
+
+    const cellsScaled3d = this.#drawCellPolyhedra(verticesCellsScaled, trianglesIndices);
+
+    this.#drawLinesPerFace(indicesCells, verticesCellsScaled)
+
+  }
+
+  #drawLinesPerFace(voronoiIndices, voronoiVertices) {
+    const material = new LineBasicMaterial({
+      color: "white",
+      linewidth: 5,
+    });
+    voronoiIndices.forEach((face, i) => {
+      const group = new Group();
+      face.forEach((faceIndices) => {
+        const faceVertices = faceIndices.map(
+          (index) => new Vector3(...voronoiVertices[i][index])
+        );
+        const geometry = new BufferGeometry().setFromPoints(faceVertices);
+        const line = new Line(geometry, material);
+        group.add(line);
+      });
+      this.scene.add(group);
+    })
+
+  }
+
+
+  #scaleAroundCentroids(voronoiVertices, voronoiCentroids, amount) {
+    return voronoiVertices.map((vertices, i) => {
+      const centroid = new Vector3(...voronoiCentroids[i]);
+      return vertices.map(vertexArray => {
+        const vertex = new Vector3(...vertexArray)
+        // console.log('vertex: ', vertex);
+        const difference = new Vector3().copy(centroid).sub(vertex);
+        const length = difference.length();
+        // console.log('length: ', length);
+        const v = new Vector3().copy(vertex).add(difference.setLength(amount))
+        const length2 = v.length();
+        const d = length2 - length;
+        return [v.x, v.y, v.z]
+      })
+    })
+  }
+
+  #makePolyhedronModel(model) {
+    return model.centroids.map((centroid, i) => {
+      const vertices = model.vertices[i].map(vertex => new Vector3(...vertex));
+      // const indices = model.indices[i].map(index=>Vector3(...index));
+      return {
+        centroid: new Vector3(...centroid),
+        vertices,
+        indices: model.vertices[i]
+      }
+    })
+  }
+
+  #scaleAroundCentroid(model) {
+    model.forEach(polyhedron => {
+      polyhedron.vertices.map(vertex => {
+        // console.log('vertex: ', vertex);
+        const difference = new Vector3().copy(polyhedron.centroid).sub(vertex);
+        const length = difference.length();
+        // console.log('length: ', length);
+        const v = new Vector3().copy(vertex).add(difference.setLength(0.01))
+        const length2 = v.length();
+        const d = length2 - length;
+        // console.log('d: ', d);
+        if (!polyhedron.scaled) {
+          polyhedron.scaled = [v]
+        } else {
+          polyhedron.scaled.push(v)
+        }
+      })
+    })
   }
 
   #drawCellPolyhedra(vertices, indices) {
@@ -346,15 +433,22 @@ class App {
     if (vertices.length - 1 !== maxIndex) {
       throw new Error('maxIndex should be equal to vertices length')
     }
-    const points = vertices.map(vectorAsArray => new Vector3(...vectorAsArray))
-    const g = new BufferGeometry().setFromPoints(points);
+    const points = vertices.map(vectorAsArray => new Vector3(...vectorAsArray));
+    return this.#drawPolyhedron(points, index, color)
+  }
+
+  #drawPolyhedron(vertex, index, color) {
+    const g = new BufferGeometry().setFromPoints(vertex);
     g.setIndex(index)
-    const m = new MeshBasicMaterial({ color, transparent: true, opacity: 0.3 })
+    const m = new MeshBasicMaterial({
+      color,
+      // transparent: true,
+      // opacity: 0.3,
+      side: DoubleSide
+    })
     const mesh = new Mesh(g, m)
     this.scene.add(mesh)
     return mesh
-
-
   }
 
   #numberParser(rawData, parser = 'parseFloat') {
@@ -375,7 +469,6 @@ class App {
         .map(stringNumber => window[parser](stringNumber))
       return y
     })
-
   }
 
   #parsePoints(rawPoints) {
@@ -383,8 +476,6 @@ class App {
     const IS_SHIFTNG = true;
     const points = lines.map(x => this.#stringLineToPoints(x, IS_SHIFTNG))
     return points
-
-
   }
 
   #parseEdgesVertices(vertices) {
@@ -414,11 +505,10 @@ class App {
       s.position.set(...element)
       this.scene.add(s);
     });
-
   }
 
-  #drawLines(lines) {
-    const m = new LineBasicMaterial({ color: 'lightblue' })
+  #drawLines(lines, color = 'lightblue') {
+    const m = new LineBasicMaterial({ color })
     const vectors = lines.map(line => line.map(x => new Vector3(...x)))
     vectors.forEach(v => {
       const g = new BufferGeometry().setFromPoints(v);
