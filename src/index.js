@@ -30,6 +30,7 @@ import { Pane } from 'tweakpane'
 
 class App {
   #voronoiModel = [];
+  #colors = [];
   #resizeCallback = () => this.#onResize()
 
   constructor(container) {
@@ -48,6 +49,16 @@ class App {
     this.#createControls()
     this.#createDebugPanel()
     this.#createLoaders()
+
+    this.#colors = [{ face: 'red', border: 'white' },
+    { face: 'green', border: 'white' },
+    { face: 'blue', border: 'white' },
+    { face: 'cyan', border: 'black' },
+    { face: 'magenta', border: 'white' },
+    { face: 'yellow', border: 'black' },
+    { face: 'gray', border: 'white' },
+    { face: 'white', border: 'black' },
+    ]
 
     // await this.#loadModel()
 
@@ -345,10 +356,15 @@ class App {
   }
 
   #drawLinesPerFace(voronoiIndices, voronoiVertices) {
-    const material = new LineBasicMaterial({
+    const lightMaterial = new LineBasicMaterial({
       color: "white",
       linewidth: 5,
     });
+    const darkMaterial = new LineBasicMaterial({
+      color: "black",
+      linewidth: 5,
+    });
+    const borderColors = this.#colors.map(color => color.border)
     voronoiIndices.forEach((face, i) => {
       const group = new Group();
       face.forEach((faceIndices) => {
@@ -356,6 +372,13 @@ class App {
           (index) => new Vector3(...voronoiVertices[i][index])
         );
         const geometry = new BufferGeometry().setFromPoints(faceVertices);
+        let material;
+        const borderColor = borderColors[i % borderColors.length]
+        if (borderColor === 'white') {
+          material = lightMaterial;
+        } else if (borderColor === 'black') {
+          material = darkMaterial;
+        }
         const line = new Line(geometry, material);
         group.add(line);
       });
@@ -415,13 +438,13 @@ class App {
   }
 
   #drawCellPolyhedra(vertices, indices) {
-    const colors = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'gray', 'white']
+    const faceColors = this.#colors.map(color => color.face);
     if (indices.length !== vertices.length) {
       throw 'Arrays must be of same length'
     }
     const meshes = vertices.map((polyhedronVertices, i) => {
       const polyhedronIndices = indices[i];
-      return this.#drawCellPolyhedron(polyhedronVertices, polyhedronIndices, colors[i % colors.length])
+      return this.#drawCellPolyhedron(polyhedronVertices, polyhedronIndices, faceColors[i % faceColors.length])
 
     })
     return meshes
