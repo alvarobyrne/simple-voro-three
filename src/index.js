@@ -27,10 +27,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 import { Pane } from 'tweakpane'
+import { ConvexGeometry } from './jsm/geometries/ConvexGeometry';
 
 class App {
   #voronoiModel = [];
   #colors = [];
+  #faceColors = [];
   #resizeCallback = () => this.#onResize()
 
   constructor(container) {
@@ -59,6 +61,8 @@ class App {
     { face: 'gray', border: 'white' },
     { face: 'white', border: 'black' },
     ]
+    this.#faceColors = this.#colors.map(color => color.face);
+
 
     // await this.#loadModel()
 
@@ -308,7 +312,7 @@ class App {
     const edgesVerticesResponse = await fetch('random_points_v.gnu')
     const edgesVertices = await edgesVerticesResponse.text();
     const lines = this.#parseEdgesVertices(edgesVertices).filter(x => x.length > 0)
-    this.#drawLines(lines, 'red');
+    // this.#drawLines(lines, 'red');
 
     const responseVerticesCells = await fetch('vertices.txt')
     const verticesCellsRaw = await responseVerticesCells.text();
@@ -346,12 +350,31 @@ class App {
       centroids
     })
 
-    this.#scaleAroundCentroid(this.#voronoiModel);
-    const verticesCellsScaled = this.#scaleAroundCentroids(verticesCells, centroids, 0.1)
+    const scaleAmount = 0.1;
 
-    const cellsScaled3d = this.#drawCellPolyhedra(verticesCellsScaled, trianglesIndices);
+    this.#scaleAroundCentroid(this.#voronoiModel, scaleAmount);
+    const verticesCellsScaled = this.#scaleAroundCentroids(verticesCells, centroids, scaleAmount)
+
+    // const cellsScaled3d = this.#drawCellPolyhedra(verticesCellsScaled, trianglesIndices);
 
     this.#drawLinesPerFace(indicesCells, verticesCellsScaled)
+
+    this.#drawVoronoiConvexGeometry(this.#voronoiModel)
+
+  }
+
+  #drawVoronoiConvexGeometry(model) {
+    model.forEach((cell, i) => {
+      const geometry = new ConvexGeometry(cell.scaled)
+      const material = new MeshBasicMaterial({
+        color: this.#faceColors[i % this.#faceColors.length],
+        side: DoubleSide,
+        opacity: 0.6,
+        transparent: true,
+      })
+      const mesh = new Mesh(geometry, material);
+      this.scene.add(mesh);
+    })
 
   }
 
@@ -412,19 +435,19 @@ class App {
       return {
         centroid: new Vector3(...centroid),
         vertices,
-        indices: model.vertices[i]
+        indices: model.vertices[i]//BUG
       }
     })
   }
 
-  #scaleAroundCentroid(model) {
+  #scaleAroundCentroid(model, amount = 0.01) {
     model.forEach(polyhedron => {
       polyhedron.vertices.map(vertex => {
         // console.log('vertex: ', vertex);
         const difference = new Vector3().copy(polyhedron.centroid).sub(vertex);
         const length = difference.length();
         // console.log('length: ', length);
-        const v = new Vector3().copy(vertex).add(difference.setLength(0.01))
+        const v = new Vector3().copy(vertex).add(difference.setLength(amount))
         const length2 = v.length();
         const d = length2 - length;
         // console.log('d: ', d);
@@ -438,7 +461,7 @@ class App {
   }
 
   #drawCellPolyhedra(vertices, indices) {
-    const faceColors = this.#colors.map(color => color.face);
+    const faceColors = this.#faceColors;
     if (indices.length !== vertices.length) {
       throw 'Arrays must be of same length'
     }
